@@ -2,8 +2,6 @@
 # tests; to account for sensitivity of positivity over time when converting
 # to daily attack rates
 
-library(tidyverse)
-
 # mean duration for each test is the average number of days an individual would
 # test positive, if tested once every day. This accounts for lower detection
 # probabilities at the beginning and end of the infection.
@@ -421,3 +419,29 @@ costing %>%
     minutes_per_household,
     households
   )
+
+
+# all test types in this one
+moe_est %>%
+  filter(
+    !sample_size %in% effective_options
+  ) %>%
+  mutate(
+    households = sample_size / household_correction,
+    pcr_prevalence = paste0(signif(100 * pcr_prev), "%"),
+    moe_95 = moe_pcr,
+    moe_50 = moe_pcr * Z(0.5) / Z(0.05),
+    prevalence_ci_50 = prevalence_range(pcr_prev, moe_50),
+    prevalence_ci_95 = prevalence_range(pcr_prev, moe_95),
+  ) %>%
+  select(
+    test,
+    pcr_prevalence,
+    households,
+    prevalence_ci_50,
+    prevalence_ci_95
+  ) %>%
+  print(
+    n = Inf
+  )
+
