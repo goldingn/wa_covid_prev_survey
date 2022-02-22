@@ -145,7 +145,16 @@ mean_durations <- list(
 #     )
 #   )
 
-household_size <- 2.6
+# household_size <- 2.6 3.5 is about the average for Gold Coast survey, biased
+# up because either larger households (e.g. with kids) are more keen to be
+# swabbed, or because larger households are more likely to have someone home
+household_size <- 3.5
+
+# assumption about total cost of a lamp sample (including consumables)
+lamp_sample_cost <- 20
+
+# assume casual RA rates, plus $10 per hour for travel etc.
+hourly_rate <- 43 + 10
 
 # options for either effective sample sizes, or target numbers of households
 effective_options <- c(500, 1000, 2000, 3000)
@@ -297,11 +306,11 @@ sampling_efficiency <- expand_grid(
   # different speeds of teams
   households_per_hour = c(1, 2, 3),
   # assume a  team of x casual RAs per household, plus travel expenses ($10 per hour)
-  cost_per_personnel_hour = personnel_per_household * 43 + 10,
+  cost_per_personnel_hour = personnel_per_household * hourly_rate,
   # whether to pick a random person, or do everyone
   test_household = c(FALSE, TRUE),
   # upper bound on LAMP cost per test (includes consumables)
-  cost_per_test = 20,
+  cost_per_test = lamp_sample_cost,
   # mean number of people per household
   household_size = household_size
 ) %>%
@@ -404,7 +413,7 @@ costing %>%
   filter(
     !effective_samples %in% effective_options,
     design == "household",
-    minutes_per_household %in% c(20, 60),
+    minutes_per_household %in% c(20, 30, 60),
   ) %>%
   select(
     minutes_per_household,
