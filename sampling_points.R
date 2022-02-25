@@ -32,31 +32,55 @@ wa <- mb %>%
     by = c("MB_CODE16" = "MB_CODE_2016")
   )
 
-
-perth_inner_metro <- wa %>%
+greater_perth <- wa %>%
   # subset to inner metropolitan Perth, excluding Wadjemup/Rottnest
   filter(
     GCC_NAME16 == "Greater Perth",
-    str_starts(SA4_NAME16, "Perth"),
+  )
+
+perth_inner_metro <- greater_perth %>%
+  # subset to inner metropolitan Perth, excluding Wadjemup/Rottnest
+  filter(
     SA3_NAME16 %in% inner_metro_sa3s,
     SA1_MAIN16 != "50702116525"
   )
 
-
 # plot the areas included
 perth_inner_metro %>%
-  ggplot(
-    aes(
-      fill = SA3_NAME16
-    ),
+  rename(
+    `Level 3 Statistical Area` = SA3_NAME16
+  ) %>%
+  ggplot() +
+  geom_sf(
+    fill = grey(0.9),
+    data = greater_perth,
+    lwd = 0.1,
+    colour = "white"
   ) +
   geom_sf(
+    aes(
+      fill = `Level 3 Statistical Area`
+    ),
     lwd = 0
   ) +
   theme_minimal()
 
+ggsave("figures/study_region.png",
+       width = 8,
+       height = 10,
+       bg = "white")
+
+
+# SA3 populations
 perth_inner_metro %>%
   group_by(SA3_NAME16) %>%
+  summarise(
+    Person = sum(Person)
+  )
+
+# total population
+perth_inner_metro %>%
+  st_drop_geometry() %>%
   summarise(
     Person = sum(Person)
   )
