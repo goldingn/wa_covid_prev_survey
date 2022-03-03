@@ -8,7 +8,7 @@
 #' @return
 #' @author Nick Golding
 #' @export
-moe_from_sample_size <- function(sample_size, proportion, population = 1e6, alpha = 0.05) {
+moe_from_sample_size <- function(sample_size, proportion, population = 785198, alpha = 0.05) {
   # invert finite sample size correction
   sample_size_infinite <- (sample_size - sample_size * population) / (sample_size - population) 
   # compute margin of error
