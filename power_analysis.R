@@ -57,7 +57,7 @@ pcr_sensitivity <- tibble(
 # https://doi.org/10.1001/jama.2021.13967
 lamp_sensitivity <- pcr_sensitivity %>%
   mutate(
-    # switch to days sunce symptom onset
+    # switch to days since symptom onset
     day = day - 5,
     # scale down to symptomatic LAMP
     symptomatic = case_when(
@@ -454,3 +454,64 @@ moe_est %>%
     n = Inf
   )
 
+
+# lamp prevalence directly
+
+expand_grid(
+  test = "lamp",
+  prevalence = c(0.005, 0.01, 0.05, 0.1),
+  sample_size = 250,
+  alpha = c(0.5, 0.05)
+) %>%
+  # compute margins of error, relative to 30% for PCR (similar to NI)
+  mutate(
+    # get the margin of error, given this sample size
+    moe = moe_from_sample_size(
+      sample_size = sample_size,
+      proportion = prevalence,
+      alpha = alpha
+    ),
+    ci = prevalence_range(prevalence, moe),
+    alpha = paste0(100 * (1 - alpha), "%"),
+    moe = paste0(round(100 * moe, 2), "%"),
+    prevalence = paste0(100 * prevalence, "%")
+  ) %>%
+  select(
+    -sample_size,
+    -test
+  ) %>%
+  pivot_wider(
+    names_from = alpha,
+    values_from = c(moe, ci),
+    # names_prefix = "CI "
+  )
+
+
+# compute CIs for these under different prevalences
+# lamp infection prevalence
+moe_est %>%
+  filter(
+    test == "lamp",
+    !sample_size %in% effective_options
+  ) %>%
+  mutate(
+    households = sample_size / household_correction,
+    pcr_prevalence = paste0(signif(100 * pcr_prev), "%"),
+    moe_95 = moe_pcr,
+    moe_50 = moe_pcr * Z(0.5) / Z(0.05),
+    prevalence_ci_50 = prevalence_range(pcr_prev, moe_50),
+    prevalence_ci_95 = prevalence_range(pcr_prev, moe_95),
+  ) %>%
+  filter(
+    households == 250
+  ) %>%
+  select(
+    pcr_prevalence,
+    prevalence_ci_50,
+    prevalence_ci_95
+  ) %>%
+  print(
+    n = Inf
+  )
+
+moe_est_formatted
