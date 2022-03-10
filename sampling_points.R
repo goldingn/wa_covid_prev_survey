@@ -90,8 +90,8 @@ perth_inner_metro %>%
 # so divide by that and round up
 n_clusters <- ceiling(250 / 3.5)
 
-# set the RNG seed for reproducibility
-set.seed(2022-03-10)
+# set the RNG seed for reproducibility (file not commited to ensure security)
+.Random.seed <- readRDS("rng_seed.RDS")
 
 # these meshblocks
 cluster_meshblocks <- sample(
