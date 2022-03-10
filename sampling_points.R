@@ -85,18 +85,36 @@ perth_inner_metro %>%
     Person = sum(Person)
   )
 
-set.seed(2022-02-16)
-meshblocks_250 <- sample(
+
+# we are aiming for 250 households, but can sample 3-4 households per location,
+# so divide by that and round up
+n_clusters <- ceiling(250 / 3.5)
+
+# set the RNG seed for reproducibility
+set.seed(2022-03-10)
+
+# these meshblocks
+cluster_meshblocks <- sample(
   perth_inner_metro$MB_CODE16,
-  size = 250,
+  size = n_clusters,
   prob = perth_inner_metro$Person * perth_inner_metro$Dwelling > 0
 )
 
-n_distinct(meshblocks_250)
+# sample one point at random within each meshblocks
+cluster_points <- perth_inner_metro %>%
+  filter(MB_CODE16 %in% cluster_meshblocks) %>%
+  st_sample(
+    size = rep(1, nrow(.))
+  )
+
+# check the numbers
+n_distinct(cluster_meshblocks)
+n_distinct(cluster_points)
+n_clusters
 
 # plot locations of sampled meshblocks
 perth_inner_metro %>% mutate(
-  sampled = MB_CODE16 %in% meshblocks_250
+  sampled = MB_CODE16 %in% cluster_meshblocks
 ) %>%
   ggplot(
     aes(
@@ -106,11 +124,34 @@ perth_inner_metro %>% mutate(
   geom_sf(
     lwd = 0
   ) +
+  geom_sf(
+    fill = "blue",
+    alpha = 0.5,
+    data = cluster_points
+  ) +
   scale_fill_manual(
     values = c(grey(0.9), "black")
   ) +
   theme_minimal()
 
-# pick a random point within each meshblock
-
-
+cluster_points %>%
+  st_as_sf() %>%
+  mutate(
+    wave_number = 1,
+    cluster_number = row_number(),
+    cluster_id = sprintf(
+      "%02d-%03d",
+      wave_number,
+      cluster_number
+    ),
+    .before = everything()
+  ) %>%
+  dplyr::select(
+    Name = cluster_id
+  ) %>%
+  st_write(
+    "outputs/pcis_points_wave_1.kml",
+    driver = "kml",
+    append = FALSE
+  )
+  
